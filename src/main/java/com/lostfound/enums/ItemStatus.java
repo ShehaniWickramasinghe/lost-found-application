@@ -1,4 +1,4 @@
-package com.lostfound.entity;
+package com.lostfound.enums;
 
 public enum ItemStatus {
     LOST,
