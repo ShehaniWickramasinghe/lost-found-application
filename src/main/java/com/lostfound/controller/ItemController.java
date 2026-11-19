@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lostfound.dto.ItemRequest;
@@ -30,7 +31,6 @@ public class ItemController {
         this.itemService = itemService;
     }
 
-    // Create a new item
     @PostMapping
     public ResponseEntity<ItemResponse> createItem(
             @Valid @RequestBody ItemRequest request) {
@@ -40,14 +40,12 @@ public class ItemController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // Get all items
     @GetMapping
     public ResponseEntity<List<ItemResponse>> getAllItems() {
 
         return ResponseEntity.ok(itemService.getAllItems());
     }
 
-    // Get item by ID
     @GetMapping("/{id}")
     public ResponseEntity<ItemResponse> getItemById(
             @PathVariable Long id) {
@@ -55,7 +53,6 @@ public class ItemController {
         return ResponseEntity.ok(itemService.getItemById(id));
     }
 
-    // Update an item
     @PutMapping("/{id}")
     public ResponseEntity<ItemResponse> updateItem(
             @PathVariable Long id,
@@ -66,7 +63,6 @@ public class ItemController {
         return ResponseEntity.ok(response);
     }
 
-    // Delete an item
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteItem(
             @PathVariable Long id) {
@@ -75,4 +71,29 @@ public class ItemController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ItemResponse>> searchItems(
+            @RequestParam String title) {
+
+        return ResponseEntity.ok(
+                itemService.searchItemsByTitle(title));
+    }
+
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<ItemResponse>> getItemsByStatus(
+            @PathVariable com.lostfound.enums.ItemStatus status) {
+
+        return ResponseEntity.ok(
+                itemService.getItemsByStatus(status));
+    }
+
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<ItemResponse>> getItemsByCategory(
+            @PathVariable String category) {
+
+        return ResponseEntity.ok(
+                itemService.getItemsByCategory(category));
+    }
+
 }
