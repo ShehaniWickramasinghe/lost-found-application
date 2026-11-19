@@ -14,6 +14,7 @@ import com.lostfound.entity.Item;
 import com.lostfound.entity.Request;
 import com.lostfound.entity.User;
 import com.lostfound.enums.RequestStatus;
+import com.lostfound.exception.ResourceNotFoundException;
 import com.lostfound.repository.ItemRepository;
 import com.lostfound.repository.RequestRepository;
 import com.lostfound.repository.UserRepository;
@@ -29,7 +30,8 @@ public class RequestService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
 
-    public RequestService(RequestRepository requestRepository,
+    public RequestService(
+            RequestRepository requestRepository,
             ItemRepository itemRepository,
             UserRepository userRepository) {
 
@@ -45,11 +47,11 @@ public class RequestService {
 
         Item item = itemRepository.findById(requestDTO.getItemId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Item not found"));
+                        new ResourceNotFoundException("Item not found"));
 
         User user = userRepository.findById(requestDTO.getRequestedById())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("User not found"));
+                        new ResourceNotFoundException("User not found"));
 
         Request request = new Request();
 
@@ -84,28 +86,29 @@ public class RequestService {
 
         Request request = requestRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Request not found with ID: " + id));
 
         return convertToResponse(request);
     }
 
-    public RequestResponse updateRequest(Long id, RequestDTO requestDTO) {
+    public RequestResponse updateRequest(
+            Long id, RequestDTO requestDTO) {
 
         logger.info("Updating request with ID: {}", id);
 
         Request request = requestRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Request not found with ID: " + id));
 
         Item item = itemRepository.findById(requestDTO.getItemId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Item not found"));
+                        new ResourceNotFoundException("Item not found"));
 
         User user = userRepository.findById(requestDTO.getRequestedById())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("User not found"));
+                        new ResourceNotFoundException("User not found"));
 
         request.setMessage(requestDTO.getMessage());
         request.setItem(item);
@@ -124,7 +127,7 @@ public class RequestService {
 
         Request request = requestRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Request not found with ID: " + id));
 
         requestRepository.delete(request);
@@ -153,7 +156,7 @@ public class RequestService {
 
         Request request = requestRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
+                        new ResourceNotFoundException(
                                 "Request not found with ID: " + id));
 
         if (newStatus == null) {
@@ -179,6 +182,47 @@ public class RequestService {
                 id, newStatus);
 
         return convertToResponse(updatedRequest);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RequestResponse> getRequestsByStatus(RequestStatus status) {
+
+        logger.info("Fetching requests by status: {}", status);
+
+        return requestRepository.findByStatus(status)
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RequestResponse> getRequestsByUser(Long userId) {
+
+        logger.info("Fetching requests by user ID: {}", userId);
+
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        return requestRepository.findByRequestedById(userId)
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RequestResponse> getRequestsByItem(Long itemId) {
+
+        logger.info("Fetching requests by item ID: {}", itemId);
+
+        if (!itemRepository.existsById(itemId)) {
+            throw new ResourceNotFoundException("Item not found");
+        }
+
+        return requestRepository.findByItemId(itemId)
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
     }
 
 }
