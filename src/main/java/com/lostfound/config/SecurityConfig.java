@@ -21,19 +21,8 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter) {
+
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
-
-    @Bean
-    public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(
-        JwtAuthenticationFilter filter) {
-
-        FilterRegistrationBean<JwtAuthenticationFilter> registration =
-            new FilterRegistrationBean<>(filter);
-
-        registration.setEnabled(false);
-
-      return registration;
     }
 
     @Bean
@@ -41,23 +30,67 @@ public class SecurityConfig {
             HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf.disable())
 
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
 
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+            .authorizeHttpRequests(auth -> auth
 
-                .addFilterBefore(
-                        jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/health").permitAll()
+
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                .requestMatchers("/api/users/**").hasRole("ADMIN")
+
+                .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/requests/*/status"
+                ).hasAnyRole("ADMIN", "STAFF")
+
+                .requestMatchers(
+                    HttpMethod.PUT,
+                    "/api/requests/**"
+                ).hasAnyRole("ADMIN", "STAFF")
+
+                .requestMatchers(
+                    HttpMethod.DELETE,
+                    "/api/requests/**"
+                ).hasAnyRole("ADMIN", "STAFF")
+
+                .requestMatchers(
+                    HttpMethod.PUT,
+                    "/api/items/**"
+                ).hasAnyRole("ADMIN", "STAFF")
+
+                .requestMatchers(
+                    HttpMethod.DELETE,
+                    "/api/items/**"
+                ).hasAnyRole("ADMIN", "STAFF")
+                .requestMatchers("/api/items/**").authenticated()
+                .requestMatchers("/api/requests/**").authenticated()
+                .anyRequest().authenticated()
+            )
+
+            .addFilterBefore(
+                jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter>
+            jwtFilterRegistration(JwtAuthenticationFilter filter) {
+
+        FilterRegistrationBean<JwtAuthenticationFilter> registration =
+                new FilterRegistrationBean<>(filter);
+
+        registration.setEnabled(false);
+
+        return registration;
     }
 }
